@@ -1,0 +1,9 @@
+elm-stuff/
+node_modules/
+/docs.json
+.DS_Store
+js/dist/
+examples/elm.js
+examples/elm-clipboard.js
+test-results/
+playwright-report/
