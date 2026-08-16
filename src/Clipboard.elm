@@ -1,6 +1,8 @@
 module Clipboard exposing
     ( MimeType(..), mimeTypeToString, mimeTypeFromString
+    , Item
     , Error(..), errorToString
+    , Permission(..), Capabilities
     )
 
 {-| Types shared by every way of using the clipboard.
@@ -11,11 +13,25 @@ module Clipboard exposing
 @docs MimeType, mimeTypeToString, mimeTypeFromString
 
 
+# Reading
+
+@docs Item
+
+
 # Errors
 
 @docs Error, errorToString
 
+
+# Permissions and support
+
+@docs Permission, Capabilities
+
 -}
+
+import File exposing (File)
+
+
 
 -- MIME TYPES
 
@@ -103,6 +119,27 @@ mimeTypeFromString raw =
 
 
 
+-- READING
+
+
+{-| One item read from the clipboard. Usually there is a single item.
+
+  - `types` lists every format the item has.
+  - `text` and `html` hold the `text/plain` and `text/html` data.
+  - `files` holds everything else (images, custom formats) as `File`s, ready
+    for [`File.toBytes`](https://package.elm-lang.org/packages/elm/file/latest/File#toBytes),
+    `File.toUrl` or an upload with `Http.fileBody`.
+
+-}
+type alias Item =
+    { types : List MimeType
+    , text : Maybe String
+    , html : Maybe String
+    , files : List File
+    }
+
+
+
 -- ERRORS
 
 
@@ -157,3 +194,37 @@ errorToString error =
 
         Unknown { name, message } ->
             name ++ ": " ++ message
+
+
+
+-- PERMISSIONS
+
+
+{-| The state of a clipboard permission.
+
+`Unavailable` means the browser can't tell. Only Chromium-based browsers
+answer this question; Firefox and Safari ask the user at the moment of
+reading instead (a "Paste" menu).
+
+-}
+type Permission
+    = Granted
+    | Denied
+    | Prompt
+    | Unavailable
+
+
+{-| What the current browser and page can do.
+
+`supportedTypes` lists the MIME types that can be written. On browsers with
+`ClipboardItem.supports()` (Chrome 121+, Firefox 127+, Safari 18.4+) this is
+exact; elsewhere it is the usual set for that API level.
+
+-}
+type alias Capabilities =
+    { secureContext : Bool
+    , asyncClipboard : Bool
+    , clipboardItem : Bool
+    , permissionsQuery : Bool
+    , supportedTypes : List MimeType
+    }
