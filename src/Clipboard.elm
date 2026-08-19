@@ -1,11 +1,17 @@
 module Clipboard exposing
-    ( MimeType(..), mimeTypeToString, mimeTypeFromString
+    ( Content, text, html, imageUrl, custom
+    , MimeType(..), mimeTypeToString, mimeTypeFromString
     , Item
     , Error(..), errorToString
     , Permission(..), Capabilities
     )
 
 {-| Types shared by every way of using the clipboard.
+
+
+# Content
+
+@docs Content, text, html, imageUrl, custom
 
 
 # MIME types
@@ -29,7 +35,76 @@ module Clipboard exposing
 
 -}
 
+import Clipboard.Internal.Content as Internal exposing (Source(..))
 import File exposing (File)
+
+
+
+-- CONTENT
+
+
+{-| Something to put on the clipboard. It always has at least one
+representation (one MIME type), and can carry several, such as HTML with a
+plain-text version for apps that don't accept HTML.
+-}
+type alias Content =
+    Internal.Content
+
+
+{-| Plain text (`text/plain`).
+
+    Clipboard.text "npm install elm-clipboard"
+
+-}
+text : String -> Content
+text value =
+    single TextPlain (Inline value)
+
+
+{-| Formatted text. The plain-text version is always written too, because
+many apps (terminals, plain inputs) can't paste HTML.
+
+    Clipboard.html
+        { html = "<b>Order #42</b> shipped"
+        , plainText = "Order #42 shipped"
+        }
+
+-}
+html : { html : String, plainText : String } -> Content
+html value =
+    Internal.Content
+        { mime = mimeTypeToString TextPlain, source = Inline value.plainText }
+        [ { mime = mimeTypeToString TextHtml, source = Inline value.html } ]
+
+
+{-| An image, copied as PNG (the only image type every browser accepts).
+The JavaScript side downloads the URL and converts other formats to PNG.
+
+The URL can be a `data:` URL, so to copy a `File` you picked or pasted, turn
+it into one with [`File.toUrl`](https://package.elm-lang.org/packages/elm/file/latest/File#toUrl)
+first. Remote URLs must allow cross-origin requests.
+
+-}
+imageUrl : String -> Content
+imageUrl url =
+    single ImagePng (FromUrl url)
+
+
+{-| Any other text-based type, such as a `Web` custom format. Check
+[`Capabilities`](#Capabilities) first: writing a type the browser doesn't
+support fails with `TypeNotSupported`.
+
+    Clipboard.custom (Web "application/vnd.myapp+json") "{\"id\":42}"
+
+-}
+custom : MimeType -> String -> Content
+custom mime value =
+    single mime (Inline value)
+
+
+single : MimeType -> Source -> Content
+single mime source =
+    Internal.Content { mime = mimeTypeToString mime, source = source } []
 
 
 
