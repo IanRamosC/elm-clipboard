@@ -1,0 +1,99 @@
+{
+  "requests": {
+    "writeText": { "v": 1, "id": "copy-1", "op": "writeText", "payload": { "text": "hello" } },
+    "writeHtml": {
+      "v": 1,
+      "id": "copy-2",
+      "op": "write",
+      "payload": {
+        "content": {
+          "representations": [
+            { "type": "text/plain", "text": "Order #42 shipped" },
+            { "type": "text/html", "text": "<b>Order #42</b> shipped" }
+          ]
+        }
+      }
+    },
+    "writeImage": {
+      "v": 1,
+      "id": "copy-3",
+      "op": "write",
+      "payload": { "content": { "representations": [ { "type": "image/png", "url": "https://example.com/chart.png" } ] } }
+    },
+    "writeCustom": {
+      "v": 1,
+      "id": "copy-4",
+      "op": "write",
+      "payload": {
+        "content": {
+          "representations": [
+            { "type": "web application/vnd.myapp+json", "text": "{\"id\":42}" }
+          ]
+        }
+      }
+    },
+    "readText": { "v": 1, "id": "read-1", "op": "readText", "payload": {} },
+    "read": { "v": 1, "id": "read-2", "op": "read", "payload": {} },
+    "permissionRead": { "v": 1, "id": "perm-1", "op": "permission", "payload": { "name": "clipboard-read" } },
+    "permissionWrite": { "v": 1, "id": "perm-2", "op": "permission", "payload": { "name": "clipboard-write" } },
+    "capabilities": { "v": 1, "id": "caps-1", "op": "capabilities", "payload": {} }
+  },
+  "replies": {
+    "wrote": { "v": 1, "id": "copy-1", "op": "writeText", "ok": null },
+    "notAllowed": {
+      "v": 1,
+      "id": "copy-1",
+      "op": "writeText",
+      "error": { "code": "NotAllowed", "name": "NotAllowedError", "message": "Write permission denied." }
+    },
+    "notFocused": {
+      "v": 1,
+      "id": "copy-1",
+      "op": "writeText",
+      "error": { "code": "DocumentNotFocused", "name": "NotAllowedError", "message": "Document is not focused." }
+    },
+    "typeNotSupported": {
+      "v": 1,
+      "id": "copy-4",
+      "op": "write",
+      "error": {
+        "code": "TypeNotSupported",
+        "name": "TypeNotSupported",
+        "message": "this browser can't write web application/vnd.myapp+json",
+        "type": "web application/vnd.myapp+json"
+      }
+    },
+    "dataError": {
+      "v": 1,
+      "id": "copy-3",
+      "op": "write",
+      "error": { "code": "DataError", "name": "DataError", "message": "loading https://example.com/chart.png failed with HTTP 404" }
+    },
+    "unknownError": {
+      "v": 1,
+      "id": "copy-1",
+      "op": "writeText",
+      "error": { "code": "Unknown", "name": "AbortError", "message": "The operation was aborted." }
+    },
+    "gotText": { "v": 1, "id": "read-1", "op": "readText", "ok": "hello" },
+    "gotItems": {
+      "v": 1,
+      "id": "read-2",
+      "op": "read",
+      "ok": [ { "types": [ "text/plain", "text/html" ], "text": "Hi", "html": "<b>Hi</b>", "files": [] } ]
+    },
+    "gotPermission": { "v": 1, "id": "perm-1", "op": "permission", "ok": "granted" },
+    "gotCapabilities": {
+      "v": 1,
+      "id": "caps-1",
+      "op": "capabilities",
+      "ok": {
+        "secureContext": true,
+        "asyncClipboard": true,
+        "clipboardItem": true,
+        "permissionsQuery": true,
+        "supportedTypes": [ "text/plain", "text/html", "image/png" ]
+      }
+    }
+  }
+}
