@@ -80,4 +80,58 @@ suite =
                         |> Result.map (Result.map .id)
                         |> Expect.equal (Ok (Ok "read-1"))
             ]
+        , describe "malformed replies"
+            [ test "a different protocol version is a decode error that says why" <|
+                \() ->
+                    case Clipboard.Port.decodeReply (Encode.object [ ( "v", Encode.int 2 ), ( "id", Encode.string "x" ) ]) of
+                        Err error ->
+                            Decode.errorToString error
+                                |> String.contains "Update the npm and Elm packages together"
+                                |> Expect.equal True
+
+                        Ok _ ->
+                            Expect.fail "expected a decode error"
+            , test "an unknown operation is a decode error" <|
+                \() ->
+                    Clipboard.Port.decodeReply
+                        (Encode.object
+                            [ ( "v", Encode.int 1 )
+                            , ( "id", Encode.string "x" )
+                            , ( "op", Encode.string "shred" )
+                            , ( "ok", Encode.null )
+                            ]
+                        )
+                        |> Result.toMaybe
+                        |> Expect.equal Nothing
+            , test "an unknown error code becomes Unknown with the browser's name" <|
+                \() ->
+                    Clipboard.Port.decodeReply
+                        (Encode.object
+                            [ ( "v", Encode.int 1 )
+                            , ( "id", Encode.string "x" )
+                            , ( "op", Encode.string "readText" )
+                            , ( "error"
+                              , Encode.object
+                                    [ ( "code", Encode.string "SomethingNew" )
+                                    , ( "name", Encode.string "WeirdError" )
+                                    , ( "message", Encode.string "huh" )
+                                    ]
+                              )
+                            ]
+                        )
+                        |> Result.map .response
+                        |> Expect.equal (Ok (GotText (Err (Unknown { name = "WeirdError", message = "huh" }))))
+            , test "an unknown permission state is Unavailable" <|
+                \() ->
+                    Clipboard.Port.decodeReply
+                        (Encode.object
+                            [ ( "v", Encode.int 1 )
+                            , ( "id", Encode.string "x" )
+                            , ( "op", Encode.string "permission" )
+                            , ( "ok", Encode.string "unavailable" )
+                            ]
+                        )
+                        |> Result.map .response
+                        |> Expect.equal (Ok (GotPermission (Ok Unavailable)))
+            ]
         ]
