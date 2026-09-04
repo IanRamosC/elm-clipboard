@@ -1,0 +1,45 @@
+{
+  "name": "elm-clipboard",
+  "version": "1.0.0",
+  "description": "JavaScript side of the ianramosc/elm-clipboard Elm package: clipboard ports and copy/paste custom elements",
+  "license": "BSD-3-Clause",
+  "author": "Ian Ramos",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./iife": "./dist/elm-clipboard.iife.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "elm",
+    "clipboard",
+    "copy",
+    "paste",
+    "ports",
+    "custom-element"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/index.js && esbuild src/index.ts --bundle --format=iife --global-name=ElmClipboard --target=es2020 --minify --outfile=dist/elm-clipboard.iife.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "size": "node scripts/size.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "esbuild": "^0.28.2",
+    "happy-dom": "^20.11.12",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.11"
+  }
+}
