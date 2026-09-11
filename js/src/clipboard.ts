@@ -234,3 +234,63 @@ function convertToPng(blob: Blob): Promise<Blob> {
     image.src = objectUrl;
   });
 }
+
+// READ
+
+export function readText(): Promise<Result<string>> {
+  const clip = clipboard();
+  if (!clip || typeof clip.readText !== "function") return resolved(fail(unavailable()));
+  try {
+    return clip.readText().then(
+      (text) => ok(text),
+      (error: unknown) => fail(toProtocolError(error)),
+    );
+  } catch (error) {
+    return resolved(fail(toProtocolError(error)));
+  }
+}
+
+export function read(): Promise<Result<Item[]>> {
+  const clip = clipboard();
+  if (clip && typeof clip.read === "function") {
+    try {
+      return clip.read().then(
+        (items) =>
+          Promise.all(items.map(toItem)).then(
+            (converted) => ok(converted),
+            (error: unknown) => fail<Item[]>(toProtocolError(error)),
+          ),
+        (error: unknown) => fail(toProtocolError(error)),
+      );
+    } catch (error) {
+      return resolved(fail(toProtocolError(error)));
+    }
+  }
+  return readText().then((result) =>
+    result.ok
+      ? ok(result.value === "" ? [] : [{ types: ["text/plain"], text: result.value, html: null, files: [] }])
+      : result,
+  );
+}
+
+async function toItem(item: ClipboardItem): Promise<Item> {
+  const result: Item = { types: [...item.types], text: null, html: null, files: [] };
+  for (const type of item.types) {
+    const blob = await item.getType(type);
+    if (type === "text/plain") result.text = await blob.text();
+    else if (type === "text/html") result.html = await blob.text();
+    else result.files.push(new File([blob], `clipboard${extension(type)}`, { type: blob.type || type }));
+  }
+  return result;
+}
+
+function extension(type: string): string {
+  const known: Record<string, string> = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+    "image/svg+xml": ".svg",
+  };
+  return known[type] ?? "";
+}

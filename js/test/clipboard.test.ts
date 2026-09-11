@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { normalizeText, writeContent, writeText } from "../src/clipboard";
+import { normalizeText, read, readText, writeContent, writeText } from "../src/clipboard";
 import { FakeClipboardItem, domError, installClipboard, installPermissions } from "./helpers";
 
 const html = {
@@ -163,5 +163,55 @@ describe("writeContent", () => {
     });
     const result = await writeContent(html);
     expect(result.ok === false && result.error.code).toBe("NotAllowed");
+  });
+});
+
+describe("reading", () => {
+  it("readText returns the text", async () => {
+    installClipboard({ readText: vi.fn(() => Promise.resolve("hello")) });
+    expect(await readText()).toEqual({ ok: true, value: "hello" });
+  });
+
+  it("read converts items: text and html as strings, the rest as Files", async () => {
+    const image = new Blob([new Uint8Array([1, 2, 3])], { type: "image/png" });
+    installClipboard({
+      read: vi.fn(() =>
+        Promise.resolve([
+          new FakeClipboardItem({
+            "text/plain": new Blob(["Hi"], { type: "text/plain" }),
+            "text/html": new Blob(["<b>Hi</b>"], { type: "text/html" }),
+            "image/png": image,
+          }),
+        ]),
+      ),
+    });
+    const result = await read();
+    if (!result.ok) throw new Error("expected ok");
+    const [item] = result.value;
+    expect(item?.types).toEqual(["text/plain", "text/html", "image/png"]);
+    expect(item?.text).toBe("Hi");
+    expect(item?.html).toBe("<b>Hi</b>");
+    expect(item?.files[0]).toBeInstanceOf(File);
+    expect(item?.files[0]?.name).toBe("clipboard.png");
+    expect(item?.files[0]?.type).toBe("image/png");
+  });
+
+  it("read falls back to readText where clipboard.read is missing", async () => {
+    installClipboard({ read: undefined as never, readText: vi.fn(() => Promise.resolve("old browser")) });
+    expect(await read()).toEqual({
+      ok: true,
+      value: [{ types: ["text/plain"], text: "old browser", html: null, files: [] }],
+    });
+  });
+
+  it("read of an empty clipboard through the fallback is an empty list", async () => {
+    installClipboard({ read: undefined as never });
+    expect(await read()).toEqual({ ok: true, value: [] });
+  });
+
+  it("reading without the API reports InsecureContext on http", async () => {
+    installClipboard(null, { secure: false });
+    const result = await readText();
+    expect(result.ok === false && result.error.code).toBe("InsecureContext");
   });
 });
