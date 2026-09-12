@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { normalizeText, read, readText, writeContent, writeText } from "../src/clipboard";
+import {
+  capabilities,
+  normalizeText,
+  permission,
+  read,
+  readText,
+  writeContent,
+  writeText,
+} from "../src/clipboard";
 import { FakeClipboardItem, domError, installClipboard, installPermissions } from "./helpers";
 
 const html = {
@@ -213,5 +221,44 @@ describe("reading", () => {
     installClipboard(null, { secure: false });
     const result = await readText();
     expect(result.ok === false && result.error.code).toBe("InsecureContext");
+  });
+});
+
+describe("permissions and capabilities", () => {
+  it("returns the permission state", async () => {
+    installPermissions(() => Promise.resolve({ state: "granted" }));
+    expect(await permission("clipboard-read")).toEqual({ ok: true, value: "granted" });
+  });
+
+  it("is unavailable where clipboard permission names throw (Firefox, Safari)", async () => {
+    installPermissions(() => Promise.reject(new TypeError("'clipboard-read' is not a valid value")));
+    expect(await permission("clipboard-read")).toEqual({ ok: true, value: "unavailable" });
+  });
+
+  it("lists types with ClipboardItem.supports()", async () => {
+    installClipboard({});
+    installPermissions(() => Promise.resolve({ state: "granted" }));
+    FakeClipboardItem.supports = (type) => type !== "image/svg+xml";
+    expect(await capabilities()).toEqual({
+      ok: true,
+      value: {
+        secureContext: true,
+        asyncClipboard: true,
+        clipboardItem: true,
+        permissionsQuery: true,
+        supportedTypes: ["text/plain", "text/html", "image/png"],
+      },
+    });
+  });
+
+  it("reports only the fallback's types on http", async () => {
+    installClipboard(null, { secure: false });
+    document.execCommand = vi.fn(() => true);
+    const result = await capabilities();
+    expect(result.ok && result.value).toMatchObject({
+      secureContext: false,
+      asyncClipboard: false,
+      supportedTypes: ["text/plain", "text/html"],
+    });
   });
 });

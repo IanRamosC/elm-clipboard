@@ -294,3 +294,52 @@ function extension(type: string): string {
   };
   return known[type] ?? "";
 }
+
+// PERMISSIONS AND CAPABILITIES
+
+export function permission(name: "clipboard-read" | "clipboard-write"): Promise<Result<PermissionState>> {
+  return queryPermission(name).then((state) => ok(state ?? "unavailable"));
+}
+
+async function queryPermission(name: string): Promise<PermissionState | undefined> {
+  const permissions = globalThis.navigator?.permissions;
+  if (!permissions || typeof permissions.query !== "function") return undefined;
+  try {
+    // Firefox and Safari throw a TypeError for clipboard permission names.
+    const status = await permissions.query({ name: name as PermissionName });
+    return status.state;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function capabilities(options: Options = defaultOptions): Promise<Result<Capabilities>> {
+  const clip = clipboard();
+  const clipboardItem = hasClipboardItem();
+  const permissionsQuery = (await queryPermission("clipboard-write")) !== undefined;
+  const supports = clipboardItem
+    ? (globalThis.ClipboardItem as { supports?: (type: string) => boolean }).supports
+    : undefined;
+
+  let supportedTypes: string[];
+  if (clip && typeof clip.write === "function" && clipboardItem) {
+    supportedTypes =
+      typeof supports === "function"
+        ? KNOWN_TYPES.filter((type) => supports.call(globalThis.ClipboardItem, type))
+        : ["text/plain", "text/html", "image/png"];
+  } else if (options.legacyFallback && typeof globalThis.document?.execCommand === "function") {
+    supportedTypes = ["text/plain", "text/html"];
+  } else if (clip && typeof clip.writeText === "function") {
+    supportedTypes = ["text/plain"];
+  } else {
+    supportedTypes = [];
+  }
+
+  return ok({
+    secureContext: secureContext(),
+    asyncClipboard: clip !== undefined,
+    clipboardItem,
+    permissionsQuery,
+    supportedTypes,
+  });
+}
