@@ -1,4 +1,4 @@
-// <elm-clipboard-copy>.
+// <elm-clipboard-copy> and <elm-clipboard-paste>.
 // The copy element follows @github/clipboard-copy-element: button role and
 // tabindex by default, Enter/Space copy, aria-disabled="true" disables it,
 // `for` is resolved within the element's own root (works in shadow DOM).
@@ -9,9 +9,11 @@ import { defaultOptions, writeContent, writeText, type Options } from "./clipboa
 import type { Content, Item, ProtocolError, Result } from "./protocol";
 
 export const COPY_TAG = "elm-clipboard-copy";
+export const PASTE_TAG = "elm-clipboard-paste";
 
 export const COPY_EVENT = "elm-clipboard:copy";
 export const ERROR_EVENT = "elm-clipboard:error";
+export const PASTE_EVENT = "elm-clipboard:paste";
 
 let elementOptions: Options = defaultOptions;
 
@@ -111,8 +113,42 @@ function textOf(target: Element): string {
   return target.textContent ?? "";
 }
 
+export class ElmClipboardPasteElement extends BaseElement {
+  #preventPaste = false;
+
+  constructor() {
+    super();
+    upgradeProperty(this, "preventPaste");
+    this.addEventListener("paste", (event) => this.#onPaste(event as ClipboardEvent));
+  }
+
+  /** When true, the browser's own paste is cancelled. Also settable with the `prevent-default` attribute. */
+  get preventPaste(): boolean {
+    return this.#preventPaste || this.hasAttribute("prevent-default");
+  }
+
+  set preventPaste(value: boolean) {
+    this.#preventPaste = Boolean(value);
+  }
+
+  #onPaste(event: ClipboardEvent): void {
+    const data = event.clipboardData;
+    if (!data) return;
+    if (this.preventPaste) event.preventDefault();
+    const types = Array.from(data.types);
+    const detail: Item = {
+      types,
+      text: types.includes("text/plain") ? data.getData("text/plain") : null,
+      html: types.includes("text/html") ? data.getData("text/html") : null,
+      files: Array.from(data.files),
+    };
+    // Not bubbling: Elm listens on this element, and nested zones must not see it twice.
+    this.dispatchEvent(new CustomEvent<Item>(PASTE_EVENT, { bubbles: false, detail }));
+  }
+}
+
 /**
- * Defines <elm-clipboard-copy>. Safe to call more than once (hot reload,
+ * Defines both custom elements. Safe to call more than once (hot reload,
  * several Elm apps on a page); the first call's options win.
  */
 export function defineElements(options: Partial<Options> = {}): void {
@@ -122,4 +158,5 @@ export function defineElements(options: Partial<Options> = {}): void {
     elementOptions = { ...defaultOptions, ...options };
     registry.define(COPY_TAG, ElmClipboardCopyElement);
   }
+  if (!registry.get(PASTE_TAG)) registry.define(PASTE_TAG, ElmClipboardPasteElement);
 }

@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { COPY_EVENT, ERROR_EVENT, defineElements } from "../src/elements";
+import { COPY_EVENT, ERROR_EVENT, PASTE_EVENT, defineElements } from "../src/elements";
 import { domError, installClipboard } from "./helpers";
 
 beforeAll(() => {
@@ -77,4 +77,46 @@ describe("<elm-clipboard-copy>", () => {
     expect(received.detail).toMatchObject({ code: "NotAllowed", name: "NotAllowedError" });
   });
 
+});
+
+describe("<elm-clipboard-paste>", () => {
+  function paste(target: Element, data: Record<string, string>, files: File[] = []): Event {
+    const transfer = {
+      types: [...Object.keys(data), ...(files.length ? ["Files"] : [])],
+      files,
+      getData: (type: string) => data[type] ?? "",
+    };
+    const event = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clipboardData", { value: transfer });
+    target.dispatchEvent(event);
+    return event;
+  }
+
+  it("reports text, html and files from a paste inside it", async () => {
+    const zone = mount(`<elm-clipboard-paste><textarea></textarea></elm-clipboard-paste>`);
+    const file = new File([new Uint8Array([1])], "shot.png", { type: "image/png" });
+    const event = nextEvent(zone, PASTE_EVENT);
+    const native = paste(zone.querySelector("textarea")!, { "text/plain": "Hi", "text/html": "<b>Hi</b>" }, [file]);
+    const { detail } = await event;
+    expect(detail).toEqual({
+      types: ["text/plain", "text/html", "Files"],
+      text: "Hi",
+      html: "<b>Hi</b>",
+      files: [file],
+    });
+    expect(native.defaultPrevented).toBe(false);
+  });
+
+  it("cancels the browser's paste when preventPaste is set", () => {
+    const zone = mount(`<elm-clipboard-paste></elm-clipboard-paste>`) as HTMLElement & { preventPaste: boolean };
+    zone.preventPaste = true;
+    expect(paste(zone, { "text/plain": "x" }).defaultPrevented).toBe(true);
+  });
+
+  it("reports missing formats as null", async () => {
+    const zone = mount(`<elm-clipboard-paste></elm-clipboard-paste>`);
+    const event = nextEvent(zone, PASTE_EVENT);
+    paste(zone, { "text/plain": "only text" });
+    expect((await event).detail).toMatchObject({ text: "only text", html: null, files: [] });
+  });
 });
