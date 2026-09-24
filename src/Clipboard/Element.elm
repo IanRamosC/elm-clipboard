@@ -1,6 +1,9 @@
-module Clipboard.Element exposing (copyButton, copyFrom)
+module Clipboard.Element exposing
+    ( copyButton, copyFrom
+    , pasteZone
+    )
 
-{-| Copy buttons built on a custom element from the
+{-| Copy buttons and paste zones built on two custom elements from the
 `elm-clipboard` npm package:
 
 ```js
@@ -20,14 +23,20 @@ The copy button behaves like a button: it gets `role="button"` and
 
 @docs copyButton, copyFrom
 
+
+# Paste
+
+@docs pasteZone
+
 -}
 
-import Clipboard exposing (Content, Error)
+import Clipboard exposing (Content, Error, Item)
 import Clipboard.Internal.Protocol as Protocol
 import Html exposing (Attribute, Html)
 import Html.Attributes
 import Html.Events
 import Json.Decode as Decode exposing (Decoder)
+import Json.Encode
 
 
 {-| A button that copies `content` when clicked.
@@ -92,3 +101,33 @@ resultEvents onResult =
 detailErrorDecoder : Decoder Error
 detailErrorDecoder =
     Decode.field "detail" Protocol.errorDecoder
+
+
+{-| A wrapper that reports everything pasted inside it: text, HTML and files
+(such as screenshots). Wrap a text area, or give the zone `tabindex "0"` so
+it can be focused and pasted into directly.
+
+    Clipboard.Element.pasteZone [ tabindex 0, class "drop" ]
+        { onPaste = Pasted, preventDefault = False }
+        [ textarea [] [] ]
+
+With `preventDefault = True` the browser's own paste doesn't happen, so a
+pasted screenshot can be uploaded without its text also landing in the text
+area. For files only, [`Clipboard.Events.onPasteFiles`](Clipboard-Events#onPasteFiles)
+works without JavaScript.
+
+-}
+pasteZone :
+    List (Attribute msg)
+    -> { onPaste : Item -> msg, preventDefault : Bool }
+    -> List (Html msg)
+    -> Html msg
+pasteZone attributes config children =
+    Html.node "elm-clipboard-paste"
+        (attributes
+            ++ [ Html.Attributes.property "preventPaste" (Json.Encode.bool config.preventDefault)
+               , Html.Events.on "elm-clipboard:paste"
+                    (Decode.field "detail" Protocol.itemDecoder |> Decode.map config.onPaste)
+               ]
+        )
+        children
