@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  elm:
+    name: Elm ${{ matrix.elm }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elm: 0.19.1
+            elm-npm: 0.19.1-6
+            elm-test-npm: 0.19.1-revision17
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/cache@v4
+        with:
+          path: ~/.elm
+          key: elm-${{ matrix.elm }}-${{ hashFiles('elm.json', 'examples/elm.json') }}
+      - run: npm install --global elm@${{ matrix.elm-npm }} elm-test@${{ matrix.elm-test-npm }}
+      - name: Fixtures are up to date
+        run: node scripts/gen-fixtures.mjs && git diff --exit-code tests/ProtocolFixtures.elm
+      - run: elm-test --compiler "$(which elm)"
+      - run: elm make --docs=docs.json
+
+  lint:
+    name: Format and review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --global elm@0.19.1-6 elm-format@0.8.8 elm-review@2.13.5
+      - run: elm-format --validate src tests examples/src review/src
+      - run: elm-review --compiler "$(which elm)"
+
+  js:
+    name: JavaScript
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run size
