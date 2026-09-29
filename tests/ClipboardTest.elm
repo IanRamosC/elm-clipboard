@@ -1,7 +1,9 @@
 module ClipboardTest exposing (suite)
 
-import Clipboard exposing (MimeType(..))
+import Clipboard exposing (Error(..), MimeType(..))
+import Clipboard.Feedback as Feedback exposing (Status(..))
 import Clipboard.Internal.Content as Content exposing (Source(..))
+import Clipboard.Internal.Feedback as InternalFeedback
 import Expect
 import Fuzz
 import Test exposing (Test, describe, fuzz, test)
@@ -44,4 +46,51 @@ suite =
                     Clipboard.mimeTypeFromString (Clipboard.mimeTypeToString once)
                         |> Expect.equal once
             ]
+        , describe "Feedback"
+            [ test "starts idle" <|
+                \() -> Feedback.status Feedback.init |> Expect.equal Idle
+            , test "a success shows Copied" <|
+                \() ->
+                    Feedback.record identity (Ok ()) Feedback.init
+                        |> Tuple.first
+                        |> Feedback.isCopied
+                        |> Expect.equal True
+            , test "a failure keeps the error" <|
+                \() ->
+                    Feedback.record identity (Err NotAllowed) Feedback.init
+                        |> Tuple.first
+                        |> Feedback.status
+                        |> Expect.equal (Failed NotAllowed)
+            , test "a stale timer doesn't end a newer Copied state" <|
+                \() ->
+                    let
+                        ( first, _ ) =
+                            Feedback.record identity (Ok ()) Feedback.init
+
+                        ( second, _ ) =
+                            Feedback.record identity (Ok ()) first
+                    in
+                    second
+                        |> Feedback.update (expiredFor 1)
+                        |> Feedback.isCopied
+                        |> Expect.equal True
+            , test "the latest timer ends it" <|
+                \() ->
+                    let
+                        ( first, _ ) =
+                            Feedback.record identity (Ok ()) Feedback.init
+
+                        ( second, _ ) =
+                            Feedback.record identity (Ok ()) first
+                    in
+                    second
+                        |> Feedback.update (expiredFor 2)
+                        |> Feedback.status
+                        |> Expect.equal Idle
+            ]
         ]
+
+
+expiredFor : Int -> Feedback.Msg
+expiredFor =
+    InternalFeedback.Expired
