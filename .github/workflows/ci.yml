@@ -47,7 +47,7 @@ jobs:
       - run: elm-review --compiler "$(which elm)"
 
   js:
-    name: JavaScript
+    name: JavaScript and browsers
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -57,8 +57,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm install --global elm@0.19.1-6
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build
+      - run: npm run e2e:prepare
       - run: npm run size
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run e2e

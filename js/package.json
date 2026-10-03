@@ -33,9 +33,12 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json && esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/index.js && esbuild src/index.ts --bundle --format=iife --global-name=ElmClipboard --target=es2020 --minify --outfile=dist/elm-clipboard.iife.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "size": "node scripts/size.mjs"
+    "size": "node scripts/size.mjs",
+    "e2e": "playwright test",
+    "e2e:prepare": "npm run build && cd ../examples && elm make src/Main.elm --output=elm.js && cp ../js/dist/elm-clipboard.iife.js elm-clipboard.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^24.13.3",
     "esbuild": "^0.28.2",
     "happy-dom": "^20.11.12",
