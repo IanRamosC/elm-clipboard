@@ -39,7 +39,8 @@ test("keyboard: Tab to the button and press Enter", async ({ page }) => {
 
 test("aria-disabled buttons don't copy", async ({ page }) => {
   await page.locator("#copy-link").click();
-  await page.locator("#copy-disabled").click();
+  // force: Playwright otherwise waits for aria-disabled elements to become enabled.
+  await page.locator("#copy-disabled").click({ force: true });
   expect(await pastedText(page)).toBe("https://example.com/invite/42");
 });
 

@@ -2,7 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "e2e",
-  fullyParallel: true,
+  // The tests share one system clipboard, so they run one at a time.
+  workers: 1,
   reporter: "list",
   use: { baseURL: "http://localhost:4174" },
   webServer: {
