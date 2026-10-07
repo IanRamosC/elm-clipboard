@@ -19,6 +19,9 @@ jobs:
           - elm: 0.19.1
             elm-npm: 0.19.1-6
             elm-test-npm: 0.19.1-revision17
+          - elm: 0.19.3
+            elm-npm: 0.19.3-0
+            elm-test-npm: 0.19.3-0
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,7 +45,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --global elm@0.19.1-6 elm-format@0.8.8 elm-review@2.13.5
+      - run: npm install --global elm@0.19.3-0 elm-format@0.8.8 elm-review@2.13.5
       - run: elm-format --validate src tests examples/src review/src
       - run: elm-review --compiler "$(which elm)"
 
@@ -57,7 +60,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --global elm@0.19.1-6
+      - run: npm install --global elm@0.19.3-0
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
