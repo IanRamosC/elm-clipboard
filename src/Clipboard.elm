@@ -8,6 +8,15 @@ module Clipboard exposing
 
 {-| Types shared by every way of using the clipboard.
 
+Elm 0.19 packages cannot call browser APIs, so the clipboard is reached
+through the small `elm-clipboard` npm package. Pick one of three paths:
+
+  - [`Clipboard.Element`](Clipboard-Element) for **copy buttons**. The copy runs
+    inside the click itself, so it works in every browser.
+  - [`Clipboard.Port`](Clipboard-Port) for everything else: copying after an
+    HTTP response, reading, permissions.
+  - [`Clipboard.Events`](Clipboard-Events) for pasted files, in pure Elm.
+
 
 # Content
 
