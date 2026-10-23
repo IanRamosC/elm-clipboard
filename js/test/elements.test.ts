@@ -59,6 +59,23 @@ describe("<elm-clipboard-copy>", () => {
     expect(clip.writeText).not.toHaveBeenCalled();
   });
 
+  it("copies from the element named by for= (input value, link href, text)", () => {
+    const clip = installClipboard({});
+    document.body.innerHTML = `
+      <input id="field" value="from input">
+      <a id="link" href="https://example.com/x">label</a>
+      <pre id="code">from text</pre>
+      <elm-clipboard-copy for="field"></elm-clipboard-copy>
+      <elm-clipboard-copy for="link"></elm-clipboard-copy>
+      <elm-clipboard-copy for="code"></elm-clipboard-copy>`;
+    for (const button of document.querySelectorAll<HTMLElement>("elm-clipboard-copy")) button.click();
+    expect(clip.writeText.mock.calls.map((call) => call[0])).toEqual([
+      "from input",
+      "https://example.com/x",
+      "from text",
+    ]);
+  });
+
   it("prefers the content property and reports errors as elm-clipboard:error", async () => {
     installClipboard({ write: vi.fn(() => Promise.reject(domError("NotAllowedError", "no"))) });
     const button = mount(`<elm-clipboard-copy value="ignored"></elm-clipboard-copy>`) as HTMLElement & {

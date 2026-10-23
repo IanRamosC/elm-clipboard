@@ -99,17 +99,17 @@ export class ElmClipboardCopyElement extends BaseElement {
   }
 }
 
+// Duck-typed rather than instanceof, so elements from another realm (an
+// iframe) and DOM implementations used in tests behave the same.
 function findById(from: Element, id: string): Element | null {
-  const root = from.getRootNode();
-  if (root instanceof Document || (typeof ShadowRoot !== "undefined" && root instanceof ShadowRoot)) {
-    return root.getElementById(id);
-  }
-  return null;
+  const root = from.getRootNode() as Partial<Pick<Document, "getElementById">>;
+  return typeof root.getElementById === "function" ? root.getElementById(id) : null;
 }
 
 function textOf(target: Element): string {
-  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return target.value;
-  if (target instanceof HTMLAnchorElement && target.hasAttribute("href")) return target.href;
+  const tag = target.localName;
+  if (tag === "input" || tag === "textarea") return (target as HTMLInputElement).value;
+  if (tag === "a" && target.hasAttribute("href")) return (target as HTMLAnchorElement).href;
   return target.textContent ?? "";
 }
 
