@@ -42,7 +42,7 @@ suite =
             , encodesTo "writeImage" "copy-3" (Write (Clipboard.imageUrl "https://example.com/chart.png"))
             , encodesTo "writeCustom"
                 "copy-4"
-                (Write (Clipboard.custom (Web "application/vnd.myapp+json") "{\"id\":42}"))
+                (Write (Clipboard.combine (Clipboard.text "#42") [ Clipboard.custom (Web "application/vnd.myapp+json") "{\"id\":42}" ]))
             , encodesTo "readText" "read-1" ReadText
             , encodesTo "read" "read-2" Read
             , encodesTo "permissionRead" "perm-1" (QueryPermission { read = True })

@@ -8,7 +8,7 @@ First release of the Elm package and the npm package (wire protocol version 1).
 
 ### Added
 
-- `Clipboard`: `Content` (text, HTML with plain text, PNG images from URLs, custom and `web ` formats), `MimeType`, typed `Error`, `Permission`, `Capabilities`, `Item`.
+- `Clipboard`: `Content` (text, HTML with plain text, PNG images from URLs, custom and `web ` formats, and `combine` for several formats in one item), `MimeType`, typed `Error`, `Permission`, `Capabilities`, `Item`.
 - `Clipboard.Element`: `<elm-clipboard-copy>` copy buttons (`copyButton`, `copyFrom`) and `<elm-clipboard-paste>` zones.
 - `Clipboard.Port`: `write`, `writeText`, `readText`, `read`, `permission`, `capabilities` over two user ports.
 - `Clipboard.Events`: pure-Elm `onPasteFiles`, `onPasteTypes`, `onCopy`, `onCut`.

@@ -26,6 +26,14 @@ suite =
                 \() ->
                     mimes (Clipboard.imageUrl "data:image/png;base64,AA")
                         |> Expect.equal [ ( "image/png", FromUrl "data:image/png;base64,AA" ) ]
+            , test "combine keeps order and lets later types win" <|
+                \() ->
+                    Clipboard.combine (Clipboard.text "first")
+                        [ Clipboard.custom (Web "text/csv") "a,b"
+                        , Clipboard.text "second"
+                        ]
+                        |> mimes
+                        |> Expect.equal [ ( "text/plain", Inline "second" ), ( "web text/csv", Inline "a,b" ) ]
             ]
         , describe "MIME types"
             [ test "known types round-trip" <|

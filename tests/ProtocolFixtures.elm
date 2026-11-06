@@ -8,7 +8,7 @@ requests =
     [ ( "writeText", "{\"v\":1,\"id\":\"copy-1\",\"op\":\"writeText\",\"payload\":{\"text\":\"hello\"}}" )
     , ( "writeHtml", "{\"v\":1,\"id\":\"copy-2\",\"op\":\"write\",\"payload\":{\"content\":{\"representations\":[{\"type\":\"text/plain\",\"text\":\"Order #42 shipped\"},{\"type\":\"text/html\",\"text\":\"<b>Order #42</b> shipped\"}]}}}" )
     , ( "writeImage", "{\"v\":1,\"id\":\"copy-3\",\"op\":\"write\",\"payload\":{\"content\":{\"representations\":[{\"type\":\"image/png\",\"url\":\"https://example.com/chart.png\"}]}}}" )
-    , ( "writeCustom", "{\"v\":1,\"id\":\"copy-4\",\"op\":\"write\",\"payload\":{\"content\":{\"representations\":[{\"type\":\"web application/vnd.myapp+json\",\"text\":\"{\\\"id\\\":42}\"}]}}}" )
+    , ( "writeCustom", "{\"v\":1,\"id\":\"copy-4\",\"op\":\"write\",\"payload\":{\"content\":{\"representations\":[{\"type\":\"text/plain\",\"text\":\"#42\"},{\"type\":\"web application/vnd.myapp+json\",\"text\":\"{\\\"id\\\":42}\"}]}}}" )
     , ( "readText", "{\"v\":1,\"id\":\"read-1\",\"op\":\"readText\",\"payload\":{}}" )
     , ( "read", "{\"v\":1,\"id\":\"read-2\",\"op\":\"read\",\"payload\":{}}" )
     , ( "permissionRead", "{\"v\":1,\"id\":\"perm-1\",\"op\":\"permission\",\"payload\":{\"name\":\"clipboard-read\"}}" )

@@ -1,5 +1,5 @@
 module Clipboard exposing
-    ( Content, text, html, imageUrl, custom
+    ( Content, text, html, imageUrl, custom, combine
     , MimeType(..), mimeTypeToString, mimeTypeFromString
     , Item
     , Error(..), errorToString
@@ -20,7 +20,7 @@ through the small `elm-clipboard` npm package. Pick one of three paths:
 
 # Content
 
-@docs Content, text, html, imageUrl, custom
+@docs Content, text, html, imageUrl, custom, combine
 
 
 # MIME types
@@ -44,7 +44,7 @@ through the small `elm-clipboard` npm package. Pick one of three paths:
 
 -}
 
-import Clipboard.Internal.Content as Internal exposing (Source(..))
+import Clipboard.Internal.Content as Internal exposing (Representation, Source(..))
 import File exposing (File)
 
 
@@ -109,6 +109,41 @@ support fails with `TypeNotSupported`.
 custom : MimeType -> String -> Content
 custom mime value =
     single mime (Inline value)
+
+
+{-| Put several representations in one clipboard item. When two have the same
+MIME type, the later one wins.
+
+    Clipboard.combine (Clipboard.text "#42")
+        [ Clipboard.custom (Web "application/vnd.myapp+json") "{\"id\":42}" ]
+
+-}
+combine : Content -> List Content -> Content
+combine first rest =
+    case List.foldl addRepresentation [] (List.concatMap Internal.representations (first :: rest)) of
+        head :: tail ->
+            Internal.Content head tail
+
+        [] ->
+            -- unreachable: `first` has at least one representation
+            first
+
+
+addRepresentation : Representation -> List Representation -> List Representation
+addRepresentation rep acc =
+    if List.any (\existing -> existing.mime == rep.mime) acc then
+        List.map
+            (\existing ->
+                if existing.mime == rep.mime then
+                    rep
+
+                else
+                    existing
+            )
+            acc
+
+    else
+        acc ++ [ rep ]
 
 
 single : MimeType -> Source -> Content

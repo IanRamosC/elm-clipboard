@@ -27,6 +27,7 @@
       "payload": {
         "content": {
           "representations": [
+            { "type": "text/plain", "text": "#42" },
             { "type": "web application/vnd.myapp+json", "text": "{\"id\":42}" }
           ]
         }
