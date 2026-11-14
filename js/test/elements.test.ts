@@ -2,6 +2,11 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { COPY_EVENT, ERROR_EVENT, PASTE_EVENT, defineElements } from "../src/elements";
 import { domError, installClipboard } from "./helpers";
 
+// Created *before* the elements are defined, like an Elm app that starts
+// before defineElements() runs. Its property must survive the upgrade.
+const early = document.createElement("elm-clipboard-copy") as HTMLElement & { content: unknown };
+early.content = { representations: [{ type: "text/plain", text: "set before define" }] };
+
 beforeAll(() => {
   defineElements();
   defineElements(); // idempotent
@@ -94,6 +99,12 @@ describe("<elm-clipboard-copy>", () => {
     expect(received.detail).toMatchObject({ code: "NotAllowed", name: "NotAllowedError" });
   });
 
+  it("keeps a property set before the element was defined", () => {
+    const clip = installClipboard({});
+    document.body.appendChild(early);
+    early.click();
+    expect(clip.writeText).toHaveBeenCalledWith("set before define");
+  });
 });
 
 describe("<elm-clipboard-paste>", () => {

@@ -38,11 +38,11 @@
     "e2e:prepare": "npm run build && cd ../examples && elm make src/Main.elm --output=elm.js && cp ../js/dist/elm-clipboard.iife.js elm-clipboard.js"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
-    "@types/node": "^24.13.3",
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^24.19.2",
     "esbuild": "^0.28.2",
-    "happy-dom": "^20.11.12",
+    "happy-dom": "^21.0.4",
     "typescript": "~5.9.3",
-    "vitest": "^4.1.11"
+    "vitest": "^5.1.0"
   }
 }
