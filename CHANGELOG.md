@@ -2,7 +2,7 @@
 
 The Elm package `ianramosc/elm-clipboard` and the npm package `elm-clipboard` are released together and share version numbers. Both follow [semantic versioning](https://semver.org); the Elm side is checked with `elm diff`.
 
-## Unreleased
+## 1.0.0 - 2026-11-14
 
 First release of the Elm package and the npm package (wire protocol version 1).
 
