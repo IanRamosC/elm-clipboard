@@ -1,4 +1,10 @@
+import { release } from "node:os";
 import { defineConfig, devices } from "@playwright/test";
+
+// Playwright's WebKit build for macOS 14 and older is out of date and fails to
+// open pages ("Unknown setting: PushAPIEnabled"). Run WebKit on Linux CI or
+// macOS 15+.
+const webkitWorks = process.platform !== "darwin" || Number(release().split(".")[0]) >= 24;
 
 export default defineConfig({
   testDir: "e2e",
@@ -24,6 +30,6 @@ export default defineConfig({
         launchOptions: { firefoxUserPrefs: { "dom.events.testing.asyncClipboard": true } },
       },
     },
-    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+    ...(webkitWorks ? [{ name: "webkit", use: { ...devices["Desktop Safari"] } }] : []),
   ],
 });
